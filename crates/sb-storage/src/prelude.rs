@@ -1,0 +1,12 @@
+pub use crate::errors::{StorageError, StorageResult};
+pub use crate::model::{make_record_id, Entity, Page, Sort};
+pub use crate::named;
+pub use crate::observe::{NoopStorageMetrics, StorageLabels, StorageMetrics};
+pub use crate::spi::graph::Graph;
+pub use crate::spi::health::HealthInfo;
+pub use crate::spi::migrate::{MigrationExecutor, MigrationScript, Migrator};
+pub use crate::spi::query::NamedArgs;
+pub use crate::spi::repo::Repository;
+pub use crate::spi::search::Search;
+pub use crate::spi::vector::VectorIndex;
+pub use crate::spi::{Datastore, Session, Tx};

@@ -1,0 +1,39 @@
+[package]
+name = "sb-config"
+version = "0.1.0"
+edition = "2021"
+description = "Schema-first configuration & secrets layer for the Soul platform."
+license = "Apache-2.0"
+
+[features]
+default = ["schema_json", "yaml", "toml"]
+schema_json = ["schemars"]
+yaml = ["dep:serde_yaml"]
+toml = ["dep:toml"]
+watch_fs = []
+remote_consul = []
+remote_etcd = []
+remote_s3 = []
+remote_git = []
+secrets_vault = []
+secrets_aws_kms = []
+secrets_asm = []
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+schemars = { version = "0.8", optional = true }
+thiserror = "1"
+async-trait = "0.1"
+parking_lot = "0.12"
+sha2 = "0.10"
+base64 = "0.22"
+serde_yaml = { version = "0.9", optional = true }
+toml = { version = "0.8", optional = true }
+
+sb-types = { path = "../sb-types", version = "0.1.0" }
+sb-errors = { path = "../sb-errors", version = "0.1.0" }
+
+[dev-dependencies]
+serde_json = "1"
+tokio = { version = "1", features = ["rt", "rt-multi-thread"] }

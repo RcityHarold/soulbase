@@ -1,0 +1,27 @@
+[package]
+name = "sb-auth"
+version = "0.1.0"
+edition = "2021"
+description = "Authentication, authorization, and quota SPI for the Soul platform."
+license = "Apache-2.0"
+
+[features]
+default = ["pdp-local"]
+authn-static = []
+pdp-local = []
+quota-memory = []
+cache-memory = []
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "1"
+async-trait = "0.1"
+parking_lot = "0.12"
+
+sb-types = { path = "../sb-types", version = "0.1.0" }
+sb-errors = { path = "../sb-errors", version = "0.1.0" }
+
+[dev-dependencies]
+serde_json = "1"
+tokio = { version = "1", features = ["rt", "rt-multi-thread", "macros"] }

@@ -1,0 +1,7 @@
+target
+.env
+.rainbow_docs_installed
+config
+data
+.surreal_pid
+uploads

@@ -1,0 +1,18 @@
+[workspace]
+members = [
+  "crates/sb-types",
+  "crates/sb-errors",
+  "crates/sb-config",
+  "crates/sb-auth",
+  "crates/sb-interceptors",
+  "crates/sb-sandbox",
+  "crates/sb-llm",
+  "crates/sb-tools",
+  "crates/sb-storage",
+  "crates/sb-tx"
+]
+resolver = "2"
+
+[workspace.package]
+edition = "2021"
+license = "Apache-2.0"
