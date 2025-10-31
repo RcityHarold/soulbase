@@ -18,6 +18,7 @@ use crate::surreal::observe::SurrealMetricsProxy;
 use sb_types::prelude::TenantId;
 use serde_json::Value;
 
+use surrealdb::engine::any::{connect as any_connect, Any};
 use surrealdb::engine::remote::http::Client as HttpClient;
 use surrealdb::engine::remote::http::Http;
 use surrealdb::engine::remote::ws::Client as WsClient;
@@ -111,6 +112,14 @@ impl SurrealPool {
                     config: config.clone(),
                 })
             }
+            SurrealProtocol::Memory => {
+                let client = Self::connect_mem(config).await?;
+                Ok(Self {
+                    client: SurrealClient::Memory(Arc::new(client)),
+                    semaphore: Semaphore::new(config.max_connections),
+                    config: config.clone(),
+                })
+            }
             SurrealProtocol::Http => {
                 let client = Self::connect_http(config).await?;
                 Ok(Self {
@@ -146,6 +155,23 @@ impl SurrealPool {
         Ok(db)
     }
 
+    async fn connect_mem(config: &SurrealConfig) -> StorageResult<Surreal<Any>> {
+        let db = any_connect(config.endpoint.as_str())
+            .await
+            .map_err(map_surreal_error)?;
+        let define_ns = format!("DEFINE NAMESPACE {} IF NOT EXISTS;", config.namespace);
+        db.query(define_ns).await.map_err(map_surreal_error)?;
+        db.use_ns(&config.namespace)
+            .await
+            .map_err(map_surreal_error)?;
+        let define_db = format!("DEFINE DATABASE {} IF NOT EXISTS;", config.database);
+        db.query(define_db).await.map_err(map_surreal_error)?;
+        db.use_db(&config.database)
+            .await
+            .map_err(map_surreal_error)?;
+        Ok(db)
+    }
+
     async fn authenticate<E>(db: &Surreal<E>, config: &SurrealConfig) -> StorageResult<()>
     where
         E: surrealdb::Connection,
@@ -172,6 +198,7 @@ impl SurrealPool {
         let result = match &self.client {
             SurrealClient::Ws(client) => client.query(statement).bind(bind).await,
             SurrealClient::Http(client) => client.query(statement).bind(bind).await,
+            SurrealClient::Memory(client) => client.query(statement).bind(bind).await,
         };
         drop(permit);
         result.map_err(map_surreal_error)
@@ -181,6 +208,7 @@ impl SurrealPool {
 enum SurrealClient {
     Ws(Arc<Surreal<WsClient>>),
     Http(Arc<Surreal<HttpClient>>),
+    Memory(Arc<Surreal<Any>>),
 }
 
 pub struct SurrealSession {

@@ -4,6 +4,7 @@
 pub enum SurrealProtocol {
     Ws,
     Http,
+    Memory,
 }
 
 #[derive(Clone, Debug)]

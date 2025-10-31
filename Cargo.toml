@@ -9,7 +9,8 @@ members = [
   "crates/sb-llm",
   "crates/sb-tools",
   "crates/sb-storage",
-  "crates/sb-tx"
+  "crates/sb-tx",
+  "crates/sb-gateway"
 ]
 resolver = "2"
 

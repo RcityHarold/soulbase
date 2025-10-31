@@ -11,6 +11,7 @@ memory = []
 surreal = ["dep:sb-storage", "sb-storage/surreal"]
 transport-http = ["dep:reqwest"]
 transport-kafka = ["dep:rdkafka"]
+transport-redis = ["dep:redis"]
 
 [dependencies]
 serde = { version = "1", features = ["derive"] }
@@ -28,6 +29,7 @@ sb-storage = { path = "../sb-storage", version = "0.1.0", optional = true }
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"], optional = true }
 rdkafka = { version = "0.36", optional = true, features = ["tokio"] }
 tokio = { version = "1", features = ["rt", "time", "sync"] }
+redis = { version = "0.24", optional = true, features = ["aio", "tokio-comp"] }
 
 [dev-dependencies]
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "time", "net"] }
