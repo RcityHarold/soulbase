@@ -42,6 +42,30 @@ impl<T: Entity> SurrealRepository<T> {
             "table" => T::TABLE,
         }
     }
+
+    /// Optimised path for callers that don't need the updated entity back.
+    /// Using `RETURN NONE` avoids a second serialization round-trip on large
+    /// schemaless payloads (which may contain deeply nested enums).
+    pub async fn upsert_returning_none(
+        &self,
+        tenant: &TenantId,
+        id: &str,
+        patch: Value,
+    ) -> StorageResult<()> {
+        let mut params = Self::base_params(tenant);
+        params.insert("id".into(), Value::String(id.to_string()));
+        params.insert("patch".into(), patch);
+        params.insert("__kind".into(), Value::String("write".into()));
+
+        let mut session = self.datastore.session().await?;
+        session
+            .query(
+                "UPSERT type::thing($table, $id) MERGE $patch RETURN NONE",
+                &params,
+            )
+            .await?;
+        Ok(())
+    }
 }
 
 #[async_trait]
@@ -108,17 +132,24 @@ impl<T: Entity> Repository<T> for SurrealRepository<T> {
             );
         }
 
-        let stmt = if expected_version.is_some() {
-            "UPDATE type::thing($table, $id) MERGE $patch WHERE tenant = $tenant AND ver = $expected_ver RETURN AFTER"
-        } else {
-            "UPDATE type::thing($table, $id) MERGE $patch WHERE tenant = $tenant RETURN AFTER"
-        };
-
         let mut session = self.datastore.session().await?;
-        let raw = session
-            .query_json(stmt, &params)
-            .await?
-            .ok_or_else(|| StorageError::not_found("record not found"))?;
+        let raw = if expected_version.is_some() {
+            session
+                .query_json(
+                    "UPDATE type::thing($table, $id) MERGE $patch WHERE tenant = $tenant AND ver = $expected_ver RETURN AFTER",
+                    &params,
+                )
+                .await?
+                .ok_or_else(|| StorageError::not_found("record not found"))?
+        } else {
+            session
+                .query_json(
+                    "UPSERT type::thing($table, $id) MERGE $patch RETURN AFTER",
+                    &params,
+                )
+                .await?
+                .ok_or_else(|| StorageError::unknown("upsert returned no record"))?
+        };
 
         serde_json::from_value(raw)
             .map_err(|err| StorageError::schema(format!("deserialize entity failed: {err}")))
